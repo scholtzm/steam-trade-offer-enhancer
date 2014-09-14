@@ -12,13 +12,15 @@ Steam Trade Offer Enhancer is a nifty browser script to enhance trade offers ava
 
 ### Issues
 
-* summaries sometimes have to be refreshed manually
 * doesn't check gift tags or craftability
 
 ### Installation
 
-* Firefox users need to install [Greasemonkey](http://www.greasespot.net/).
-* Chrome users need to install [Tampermonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo).
+1. Install [Greasemonkey (Firefox)](http://www.greasespot.net/) or [Tampermonkey (Chrome)](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo).
+2. Open the script in raw view.
+3. Install.
+
+You can also do the whole `git clone` procedure if you wish.
 
 ### Screenshots
 

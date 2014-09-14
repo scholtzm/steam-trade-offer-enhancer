@@ -4,7 +4,7 @@
 // @description Browser script to enhance Steam trade offers.
 // @include     /^https?:\/\/steamcommunity\.com\/(id|profiles)\/.*\/tradeoffers.*/
 // @include     /^https?:\/\/steamcommunity\.com\/tradeoffer.*/
-// @version     1.0.1
+// @version     1.1.0
 // @grant       none
 // @author      HusKy
 // ==/UserScript==
@@ -52,7 +52,7 @@ var tradeOfferPage = {
     }
 };
 
-var freshTradeOffer = {
+var tradeOfferWindow = {
     evaluate_items: function(items) {
         var result = {};
         result._total = 0;
@@ -105,18 +105,33 @@ var freshTradeOffer = {
         var mine = jQuery("div#your_slots");
         var other = jQuery("div#their_slots");
 
-        var my_items = freshTradeOffer.evaluate_items(mine);
-        var other_items = freshTradeOffer.evaluate_items(other);
+        var my_items = tradeOfferWindow.evaluate_items(mine);
+        var other_items = tradeOfferWindow.evaluate_items(other);
 
-        freshTradeOffer.dump_summary(target, "My", my_items);
+        tradeOfferWindow.dump_summary(target, "My", my_items);
         if(other_items._total > 0) target.append("<br><br>");
-        freshTradeOffer.dump_summary(target, "Their", other_items);
+        tradeOfferWindow.dump_summary(target, "Their", other_items);
+    },
+
+    init: function() {
+        var isLoading = jQuery("div#trade_inventory_pending:visible").length > 0;
+
+        if(!isLoading) {
+            setTimeout(function() {
+                tradeOfferWindow.summarise();
+            }, 1000);
+            return;
+        }
+
+        setTimeout(function() {
+            tradeOfferWindow.init();
+        }, 250);
     }
 };
 
 jQuery(function() {
 
-var location = window.location;
+var location = window.location.pathname;
 
 // Append CSS style.
 var style = "<style type='text/css'>" +
@@ -124,11 +139,12 @@ var style = "<style type='text/css'>" +
             ".summary_item { padding: 3px; margin: 0 2px 2px 0; background-color: #3C352E;background-position: center; background-size: 48px 48px; background-repeat: no-repeat; border: 1px solid; font-size: 16px; width: 48px; height: 48px; display: inline-block; }" +
             ".summary_badge { padding: 1px 3px; border-radius: 4px; background-color: #0099CC; border: 1px solid #003399; font-size: 12px; }" +
             ".btn_custom { border-width: 0; background-color: black; border-radius: 2px; font-family: Arial; color: white; line-height: 20px; font-size: 12px; padding: 0 15px; vrtical-align: middle; cursor: pointer; }" +
+            "#refresh_summary { font-size: 10px; color: #393939; }" +
             "</style>";
 jQuery(style).appendTo("head");
 
 // Trade offer page with multiple trade offers ...
-if(location.pathname.indexOf("tradeoffers") > -1) {
+if(location.indexOf("tradeoffers") > -1) {
 
     // Retrieve all trade offers.
     var trade_offers = jQuery("div.tradeoffer");
@@ -149,7 +165,7 @@ if(location.pathname.indexOf("tradeoffers") > -1) {
     }
 
     // Single trade offer window ...
-} else if(location.pathname.indexOf("tradeoffer") > -1) {
+} else if(location.indexOf("tradeoffer") > -1) {
 
     // Append new divs ...
     jQuery("div.trade_left div.trade_box_contents").append("<div class=\"trade_rule selectableNone\"/><div class=\"item_adder\"/>");
@@ -157,13 +173,20 @@ if(location.pathname.indexOf("tradeoffers") > -1) {
     jQuery("div.item_adder").append("<input id=\"amount_control\" class=\"filter_search_box\" type=\"text\" placeholder=\"16\"> ");
     jQuery("div.item_adder").append("<button id=\"btn_additems\" type=\"button\" class=\"btn_custom\">Add</button>");
 
-    jQuery("div.trade_left div.trade_box_contents").append("<div class=\"trade_rule selectableNone\"/><div id=\"refresh\"/><div class=\"tradeoffer_items_summary\"/>");
-    jQuery("div#refresh").append("<a href=\"#\" id=\"refresh_summary\">[ Refresh summaries ]</a><br><br>");
+    jQuery("div.trade_left div.trade_box_contents").append("<div class=\"trade_rule selectableNone\"/><div class=\"tradeoffer_items_summary\"/><div id=\"refresh\"/>");
+    jQuery("div#refresh").append("<br><a href=\"#\" id=\"refresh_summary\">[ Refresh summaries ]</a>");
 
     // Handle manual refresh
     jQuery("a#refresh_summary").click(function(e) {
-        freshTradeOffer.summarise();
+        tradeOfferWindow.summarise();
         e.preventDefault();
+    });
+
+    // Refresh summaries whenever ...
+    jQuery("body").click(function() {
+        setTimeout(function() { 
+            tradeOfferWindow.summarise();
+        }, 500);
     });
 
     // Handle item auto adder
@@ -191,9 +214,11 @@ if(location.pathname.indexOf("tradeoffers") > -1) {
 
         // Refresh summaries
         setTimeout(function() {
-            freshTradeOffer.summarise();
+            tradeOfferWindow.summarise();
         }, amount * 50 + 500);
     });
+
+    tradeOfferWindow.init();
 }
 
 });
