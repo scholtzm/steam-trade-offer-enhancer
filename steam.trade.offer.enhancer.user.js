@@ -4,10 +4,20 @@
 // @description Browser script to enhance Steam trade offers.
 // @include     /^https?:\/\/steamcommunity\.com\/(id|profiles)\/.*\/tradeoffers.*/
 // @include     /^https?:\/\/steamcommunity\.com\/tradeoffer.*/
-// @version     1.1.0
+// @version     1.2.0
 // @grant       none
 // @author      HusKy
 // ==/UserScript==
+
+function getUrlParam(paramName) {
+    var params = window.location.search.substring(1).split("&");
+    for(i = 0; i < params.length; i++) {
+        var currentParam = params[i].split("=");
+        if(currentParam[0] === paramName) {
+            return currentParam[1];
+        }
+    }
+}
 
 var tradeOfferPage = {
     evaluate_items: function(items) {
@@ -105,27 +115,60 @@ var tradeOfferWindow = {
         var mine = jQuery("div#your_slots");
         var other = jQuery("div#their_slots");
 
-        var my_items = tradeOfferWindow.evaluate_items(mine);
-        var other_items = tradeOfferWindow.evaluate_items(other);
+        var my_items = this.evaluate_items(mine);
+        var other_items = this.evaluate_items(other);
 
-        tradeOfferWindow.dump_summary(target, "My", my_items);
+        this.dump_summary(target, "My", my_items);
         if(other_items._total > 0) target.append("<br><br>");
-        tradeOfferWindow.dump_summary(target, "Their", other_items);
+        this.dump_summary(target, "Their", other_items);
     },
 
     init: function() {
-        var isLoading = jQuery("div#trade_inventory_pending:visible").length > 0;
+        var self = this;
 
-        if(!isLoading) {
+        // something is loading
+        var isReady = jQuery("img[src$='throbber.gif']:visible").length <= 0;
+
+        // our partner's inventory is also loading at this point
+        var itemParamExists = getUrlParam("for_item") !== undefined;
+        var hasBeenLoaded = true;
+
+        if(itemParamExists) {
+            // format: for_item=<appId>_<contextId>_<itemId>
+            var item = getUrlParam("for_item").split("_");
+            hasBeenLoaded = jQuery("div#inventory_" + UserThem.strSteamId + "_" + item[0] + "_" + item[1]).length > 0;
+        }
+
+        if(isReady && (!itemParamExists || hasBeenLoaded)) {
             setTimeout(function() {
-                tradeOfferWindow.summarise();
-            }, 1000);
+                self.summarise();
+            }, 500);
+
+            return;
+        }
+
+        if(itemParamExists && hasBeenLoaded) {
+            setTimeout(self.deadItem.bind(self), 5000);
             return;
         }
 
         setTimeout(function() {
-            tradeOfferWindow.init();
+            self.init();
         }, 250);
+    },
+
+    deadItem: function() {
+        var deadItemExists = jQuery("a[href$='_undefined']").length > 0;
+        var item = getUrlParam("for_item").split("_");
+
+        if(deadItemExists) {
+            unsafeWindow.g_rgCurrentTradeStatus.them.assets = [];
+            RefreshTradeStatus(g_rgCurrentTradeStatus, true);
+            alert("Seems like the item you are looking to buy (ID: " + item[2] + ") is no longer available. You should check other users backpack and see if it's still there.");
+        } else {
+            // Something was loading very slowly, restart init...
+            this.init();
+        }
     }
 };
 
@@ -138,8 +181,7 @@ var style = "<style type='text/css'>" +
             ".tradeoffer_items_summary { color: #fff; font-size: 10px; }" +
             ".summary_item { padding: 3px; margin: 0 2px 2px 0; background-color: #3C352E;background-position: center; background-size: 48px 48px; background-repeat: no-repeat; border: 1px solid; font-size: 16px; width: 48px; height: 48px; display: inline-block; }" +
             ".summary_badge { padding: 1px 3px; border-radius: 4px; background-color: #0099CC; border: 1px solid #003399; font-size: 12px; }" +
-            ".btn_custom { border-width: 0; background-color: black; border-radius: 2px; font-family: Arial; color: white; line-height: 20px; font-size: 12px; padding: 0 15px; vrtical-align: middle; cursor: pointer; }" +
-            "#refresh_summary { font-size: 10px; color: #393939; }" +
+            ".btn_custom { border-width: 0; background-color: black; border-radius: 2px; font-family: Arial; color: white; line-height: 20px; font-size: 12px; padding: 0 15px; vertical-align: middle; cursor: pointer; }" +
             "</style>";
 jQuery(style).appendTo("head");
 
@@ -173,14 +215,7 @@ if(location.indexOf("tradeoffers") > -1) {
     jQuery("div.item_adder").append("<input id=\"amount_control\" class=\"filter_search_box\" type=\"text\" placeholder=\"16\"> ");
     jQuery("div.item_adder").append("<button id=\"btn_additems\" type=\"button\" class=\"btn_custom\">Add</button>");
 
-    jQuery("div.trade_left div.trade_box_contents").append("<div class=\"trade_rule selectableNone\"/><div class=\"tradeoffer_items_summary\"/><div id=\"refresh\"/>");
-    jQuery("div#refresh").append("<br><a href=\"#\" id=\"refresh_summary\">[ Refresh summaries ]</a>");
-
-    // Handle manual refresh
-    jQuery("a#refresh_summary").click(function(e) {
-        tradeOfferWindow.summarise();
-        e.preventDefault();
-    });
+    jQuery("div.trade_left div.trade_box_contents").append("<div class=\"trade_rule selectableNone\"/><div class=\"tradeoffer_items_summary\"/>");
 
     // Refresh summaries whenever ...
     jQuery("body").click(function() {
@@ -219,6 +254,20 @@ if(location.indexOf("tradeoffers") > -1) {
     });
 
     tradeOfferWindow.init();
+
+    var itemParam = getUrlParam("for_item");
+    if(itemParam !== undefined) {
+        var item = itemParam.split("_");
+
+        unsafeWindow.g_rgCurrentTradeStatus.them.assets.push({
+            "appid":item[0],
+            "contextid":item[1],
+            "assetid":item[2],
+            "amount":1
+        });
+
+        RefreshTradeStatus(g_rgCurrentTradeStatus, true);
+    }
 }
 
 });
