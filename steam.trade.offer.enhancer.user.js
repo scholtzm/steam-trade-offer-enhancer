@@ -5,7 +5,6 @@
 // @include     /^https?:\/\/steamcommunity\.com\/(id|profiles)\/.*\/tradeoffers.*/
 // @include     /^https?:\/\/steamcommunity\.com\/tradeoffer.*/
 // @version     1.2.0
-// @grant       none
 // @author      HusKy
 // ==/UserScript==
 
