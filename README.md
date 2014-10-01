@@ -9,6 +9,7 @@ Steam Trade Offer Enhancer is a nifty browser script to enhance trade offers ava
 * supports any game or inventory type
 * detects item quality, paints
 * works with all steamcommunity pages that display trade offers
+* automatically adds item if `for_item` URL parameter is present
 
 ### Issues
 
