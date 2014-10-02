@@ -9,7 +9,7 @@
 // ==/UserScript==
 
 function getUrlParam(paramName) {
-    var params = window.location.search.substring(1).split("&");
+    var params = window.location.search.split(/\?|\&/);
     for(i = 0; i < params.length; i++) {
         var currentParam = params[i].split("=");
         if(currentParam[0] === paramName) {
