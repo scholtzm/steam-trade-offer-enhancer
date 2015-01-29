@@ -10,10 +10,7 @@ Steam Trade Offer Enhancer is a nifty browser script to enhance trade offers ava
 * detects item quality, paints
 * works with all steamcommunity pages that display trade offers
 * automatically adds item if `for_item` URL parameter is present
-
-### Issues
-
-* doesn't check gift tags or craftability
+* warns users about uncraftable, gifted, restricted items
 
 ### Installation
 
@@ -26,4 +23,4 @@ You can also do the whole `git clone` procedure if you wish.
 ### Screenshots
 
 ![Trade Offers Page](http://i.imgur.com/JLUb7De.png)
-![Trade Offer Window](http://i.imgur.com/r1yJVeX.png)
+![Trade Offer Window](http://i.imgur.com/6nhF69X.png)
