@@ -4,7 +4,7 @@
 // @description Browser script to enhance Steam trade offers.
 // @include     /^https?:\/\/steamcommunity\.com\/(id|profiles)\/.*\/tradeoffers.*/
 // @include     /^https?:\/\/steamcommunity\.com\/tradeoffer.*/
-// @version     1.2.0
+// @version     1.3.0
 // @author      HusKy
 // ==/UserScript==
 
@@ -17,6 +17,26 @@ function getUrlParam(paramName) {
         }
     }
 }
+
+// array of dangerous sescriptions
+var dangerous_descriptions = [
+    {
+        tag: "uncraftable",
+        description: "Not Usable in Crafting"
+    },
+    {
+        tag: "gifted",
+        description: "Gift from:"
+    }
+];
+
+// array of rare TF2 keys (defindexes)
+var rare_TF2_keys = [
+    "5049", "5067", "5072", "5073",
+    "5079", "5081", "5628", "5631",
+    "5632", "5713", "5716", "5717",
+    "5762"
+];
 
 var tradeOfferPage = {
     evaluate_items: function(items) {
@@ -65,6 +85,7 @@ var tradeOfferWindow = {
     evaluate_items: function(items) {
         var result = {};
         result._total = 0;
+        result._warnings = [];
 
         var slot_inner = items.find("div.slot_inner");
 
@@ -84,6 +105,56 @@ var tradeOfferWindow = {
                 } else {
                     result[img][quality]++;
                 }
+
+                // let's check item's info
+                var appid = item[0].id.split("_")[0].replace("item", "");
+                var contextid = item[0].id.split("_")[1];
+                var assetid = item[0].id.split("_")[2];
+
+                var inventory_item;
+                if(items[0].id === "your_slots")
+                    inventory_item = unsafeWindow.g_rgAppContextData[appid].rgContexts[contextid]
+                        .inventory.rgInventory[assetid];
+                else
+                    inventory_item = unsafeWindow.g_rgPartnerAppContextData[appid].rgContexts[contextid]
+                        .inventory.rgInventory[assetid];
+
+                var descriptions = inventory_item.descriptions;
+                var appdata = inventory_item.app_data;
+                var fraudwarnings = inventory_item.fraudwarnings;
+
+                var warning_text;
+
+                if(typeof descriptions === "object") {
+                    descriptions.forEach(function(d1) {
+                        dangerous_descriptions.forEach(function(d2) {
+                            if(d1.value.indexOf(d2.description) > -1) {
+                                var warning_text = "Offer contains " + d2.tag + " item(s).";
+                                if(result._warnings.indexOf(warning_text) === -1)
+                                    result._warnings.push(warning_text);
+                            }
+                        });
+                    });
+                }
+
+                if(typeof appdata === "object" && typeof appdata.def_index === "string") {
+                    if(rare_TF2_keys.indexOf(appdata.def_index) > -1) {
+                        warning_text = "Offer contains rare TF2 key(s).";
+                        if(result._warnings.indexOf(warning_text) === -1)
+                            result._warnings.push(warning_text);
+                    }
+                }
+
+                if(typeof fraudwarnings === "object") {
+                    fraudwarnings.forEach(function(text) {
+                        if(text.indexOf("restricted gift") > -1) {
+                            warning_text = "Offer contains restricted gift(s).";
+                            if(result._warnings.indexOf(warning_text) === -1)
+                                result._warnings.push(warning_text);
+                        }
+                    });
+                }
+
             }
         });
 
@@ -95,13 +166,27 @@ var tradeOfferWindow = {
 
         var htmlstring = type + " summary (" + items._total + " " + (items._total === 1 ? "item" : "items") + "):<br>";
 
+        // item counts
         for(var prop in items) {
-            if(prop === "_total") continue;
+            if(prop.indexOf("_") === 0) continue;
 
             var item_type = items[prop];
             for(var quality in item_type) {
                 htmlstring += "<span class=\"summary_item\" style=\"background-image: url('" + prop + "'); border-color: " + quality + ";\"><span class=\"summary_badge\">" + item_type[quality] + "</span></span>";
             }
+        }
+
+        // warnings
+        if(items._warnings.length > 0) {
+            htmlstring += "<span class=\"warning\"><br>Warning:<br>";
+            items._warnings.forEach(function(warning, index) {
+                htmlstring += warning;
+
+                if(index < items._warnings.length - 1) {
+                    htmlstring += "<br>";
+                }
+            });
+            htmlstring += "</span>";
         }
 
         target.append(htmlstring);
@@ -163,7 +248,7 @@ var tradeOfferWindow = {
         if(deadItemExists) {
             unsafeWindow.g_rgCurrentTradeStatus.them.assets = [];
             RefreshTradeStatus(g_rgCurrentTradeStatus, true);
-            alert("Seems like the item you are looking to buy (ID: " + item[2] + ") is no longer available. You should check other users backpack and see if it's still there.");
+            alert("Seems like the item you are looking to buy (ID: " + item[2] + ") is no longer available. You should check other user's backpack and see if it's still there.");
         } else {
             // Something was loading very slowly, restart init...
             this.init();
@@ -178,6 +263,7 @@ var location = window.location.pathname;
 // Append CSS style.
 var style = "<style type='text/css'>" +
             ".tradeoffer_items_summary { color: #fff; font-size: 10px; }" +
+            ".warning { color: #ff4422; }" +
             ".summary_item { padding: 3px; margin: 0 2px 2px 0; background-color: #3C352E;background-position: center; background-size: 48px 48px; background-repeat: no-repeat; border: 1px solid; font-size: 16px; width: 48px; height: 48px; display: inline-block; }" +
             ".summary_badge { padding: 1px 3px; border-radius: 4px; background-color: #0099CC; border: 1px solid #003399; font-size: 12px; }" +
             ".btn_custom { border-width: 0; background-color: black; border-radius: 2px; font-family: Arial; color: white; line-height: 20px; font-size: 12px; padding: 0 15px; vertical-align: middle; cursor: pointer; }" +
