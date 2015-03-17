@@ -4,7 +4,7 @@
 // @description Browser script to enhance Steam trade offers.
 // @include     /^https?:\/\/steamcommunity\.com\/(id|profiles)\/.*\/tradeoffers.*/
 // @include     /^https?:\/\/steamcommunity\.com\/tradeoffer.*/
-// @version     1.3.0
+// @version     1.3.1
 // @author      HusKy
 // ==/UserScript==
 
@@ -264,6 +264,7 @@ var location = window.location.pathname;
 var style = "<style type='text/css'>" +
             ".tradeoffer_items_summary { color: #fff; font-size: 10px; }" +
             ".warning { color: #ff4422; }" +
+            ".info { padding: 1px 3px; border-radius: 4px; background-color: #1155FF; border: 1px solid #003399; font-size: 14px; }" +
             ".summary_item { padding: 3px; margin: 0 2px 2px 0; background-color: #3C352E;background-position: center; background-size: 48px 48px; background-repeat: no-repeat; border: 1px solid; font-size: 16px; width: 48px; height: 48px; display: inline-block; }" +
             ".summary_badge { padding: 1px 3px; border-radius: 4px; background-color: #0099CC; border: 1px solid #003399; font-size: 12px; }" +
             ".btn_custom { border-width: 0; background-color: black; border-radius: 2px; font-family: Arial; color: white; line-height: 20px; font-size: 12px; padding: 0 15px; vertical-align: middle; cursor: pointer; }" +
@@ -288,6 +289,22 @@ if(location.indexOf("tradeoffers") > -1) {
             // Dump the summaries somewhere ...
             tradeOfferPage.dump_summary(jQuery(this), "primary", other_items);
             tradeOfferPage.dump_summary(jQuery(this), "secondary", my_items);
+
+            // Check if trade offer is "unavailable"
+            // Do this only for /tradeoffers page and nothing else
+            var is_ok = location.indexOf("tradeoffers", location.length - "tradeoffers".length) !== -1;
+            is_ok = is_ok || location.indexOf("tradeoffers/", location.length - "tradeoffers/".length) !== -1;
+
+            if(is_ok) {
+                var is_unavailable = jQuery(this).find("div.tradeoffer_items_banner").text().indexOf("Items Now Unavailable For Trade") > -1;
+                if(is_unavailable) {
+                    var trade_offer_id = jQuery(this).attr("id").split("_")[1];
+                    var footer = jQuery(this).find("div.tradeoffer_footer");
+
+                    var text = "<span class=\"info\">This trade offer is stuck and invalid, but you can still <strong>decline</strong> it.</span>";
+                    footer.prepend("<div class=\"tradeoffer_footer_actions\"><a class=\"whiteLink\" href=\"javascript:DeclineTradeOffer('" + trade_offer_id + "');\">" + text + "</a></div>");
+                }
+            }
         });
     }
 
