@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name        Steam Trade Offer Enhancer
-// @namespace   localhost
+// @namespace   http://steamcommunity.com/id/H_s_K/
 // @description Browser script to enhance Steam trade offers.
 // @include     /^https?:\/\/steamcommunity\.com\/(id|profiles)\/.*\/tradeoffers.*/
 // @include     /^https?:\/\/steamcommunity\.com\/tradeoffer.*/
-// @version     1.3.1
+// @version     1.3.2
 // @author      HusKy
 // ==/UserScript==
 
@@ -18,7 +18,7 @@ function getUrlParam(paramName) {
     }
 }
 
-// array of dangerous sescriptions
+// array of dangerous descriptions
 var dangerous_descriptions = [
     {
         tag: "uncraftable",
@@ -253,6 +253,21 @@ var tradeOfferWindow = {
             // Something was loading very slowly, restart init...
             this.init();
         }
+    },
+
+    clear: function(slots) {
+        var timeout = 100;
+
+        var added_items = jQuery(slots);
+        var items = added_items.find("div.itemHolder").find("div.item");
+
+        for(i = 0; i < items.length; i++) {
+            setTimeout(MoveItemToInventory, i * timeout, items[i]);
+        }
+
+        setTimeout(function() {
+            tradeOfferWindow.summarise();
+        }, items.length * timeout + 500);
     }
 };
 
@@ -315,7 +330,9 @@ if(location.indexOf("tradeoffers") > -1) {
     jQuery("div.trade_left div.trade_box_contents").append("<div class=\"trade_rule selectableNone\"/><div class=\"item_adder\"/>");
     jQuery("div.item_adder").append("<div class=\"selectableNone\">Add multiple items:</div>");
     jQuery("div.item_adder").append("<input id=\"amount_control\" class=\"filter_search_box\" type=\"text\" placeholder=\"16\"> ");
-    jQuery("div.item_adder").append("<button id=\"btn_additems\" type=\"button\" class=\"btn_custom\">Add</button>");
+    jQuery("div.item_adder").append("<button id=\"btn_additems\" type=\"button\" class=\"btn_custom\">Add</button><br><br>");
+    jQuery("div.item_adder").append("<button id=\"btn_clearmyitems\" type=\"button\" class=\"btn_custom\">Clear my items</button>");
+    jQuery("div.item_adder").append(" <button id=\"btn_cleartheiritems\" type=\"button\" class=\"btn_custom\">Clear their items</button>");
 
     jQuery("div.trade_left div.trade_box_contents").append("<div class=\"trade_rule selectableNone\"/><div class=\"tradeoffer_items_summary\"/>");
 
@@ -353,6 +370,14 @@ if(location.indexOf("tradeoffers") > -1) {
         setTimeout(function() {
             tradeOfferWindow.summarise();
         }, amount * 50 + 500);
+    });
+
+    jQuery("button#btn_clearmyitems").click(function() {
+        tradeOfferWindow.clear("div#your_slots");
+    });
+
+    jQuery("button#btn_cleartheiritems").click(function() {
+        tradeOfferWindow.clear("div#their_slots");
     });
 
     tradeOfferWindow.init();
