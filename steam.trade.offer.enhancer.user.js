@@ -78,6 +78,17 @@ var tradeOfferPage = {
         htmlstring += "<br><br>Items:<br>";
         tradeoffer.find("div." + type + " > div.tradeoffer_items_header")
                   .after("<div class=\"tradeoffer_items_summary\">" + htmlstring + "</div>");
+    },
+
+    attach_links: function(tradeoffer) {
+        var avatar = tradeoffer.find("a.tradeoffer_avatar");
+
+        if(avatar.length > 0) {
+            var profileUrl = avatar.attr("href").match(/^https?:\/\/steamcommunity\.com\/(id|profiles)\/(.*)/);
+            if(profileUrl) {
+                jQuery("div.tradeoffer_footer_actions").append(" | <a class='whiteLink' target='_blank' href='http://rep.tf/" + profileUrl[2] + "'>rep.tf</a>");
+            }
+        }
     }
 };
 
@@ -305,6 +316,9 @@ if(location.indexOf("tradeoffers") > -1) {
             tradeOfferPage.dump_summary(jQuery(this), "primary", other_items);
             tradeOfferPage.dump_summary(jQuery(this), "secondary", my_items);
 
+            // Attach links
+            tradeOfferPage.attach_links(jQuery(this));
+
             // Check if trade offer is "unavailable"
             // Do this only for /tradeoffers page and nothing else
             var is_ok = location.indexOf("tradeoffers", location.length - "tradeoffers".length) !== -1;
@@ -342,6 +356,19 @@ if(location.indexOf("tradeoffers") > -1) {
             tradeOfferWindow.summarise();
         }, 500);
     });
+
+    // hack to fix empty space under inventory
+    // TODO get rid of this if they ever fix it
+    setInterval(function() {
+        if(jQuery("#inventory_displaycontrols").height() > 50) {
+            console.log("sme tu");
+            if(jQuery("div#inventories").css("marginBottom") === "8px") {
+                jQuery("div#inventories").css("marginBottom", "7px");
+            } else {
+                jQuery("div#inventories").css("marginBottom", "8px");
+            }
+        }
+    }, 500);
 
     // Handle item auto adder
     jQuery("button#btn_additems").click(function() {
@@ -394,6 +421,16 @@ if(location.indexOf("tradeoffers") > -1) {
         });
 
         RefreshTradeStatus(g_rgCurrentTradeStatus, true);
+    }
+
+    if(unsafeWindow.g_daysMyEscrow > 0) {
+        var hours = unsafeWindow.g_daysMyEscrow * 24;
+        jQuery("div.trade_partner_headline").append("<div class='warning'>(You do not have mobile confirmations enabled. Items will be held for <b>" + hours + "</b> hours.)</div>")
+    }
+
+    if(unsafeWindow.g_daysTheirEscrow > 0) {
+        var hours = unsafeWindow.g_daysTheirEscrow * 24;
+        jQuery("div.trade_partner_headline").append("<div class='warning'>(Other user does not have mobile confirmations enabled. Items will be held for <b>" + hours + "</b> hours.)</div>")
     }
 }
 
