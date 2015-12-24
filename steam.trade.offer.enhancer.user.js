@@ -4,7 +4,7 @@
 // @description Browser script to enhance Steam trade offers.
 // @include     /^https?:\/\/steamcommunity\.com\/(id|profiles)\/.*\/tradeoffers.*/
 // @include     /^https?:\/\/steamcommunity\.com\/tradeoffer.*/
-// @version     1.4.0
+// @version     1.4.1
 // @author      HusKy
 // ==/UserScript==
 
@@ -361,7 +361,6 @@ if(location.indexOf("tradeoffers") > -1) {
     // TODO get rid of this if they ever fix it
     setInterval(function() {
         if(jQuery("#inventory_displaycontrols").height() > 50) {
-            console.log("sme tu");
             if(jQuery("div#inventories").css("marginBottom") === "8px") {
                 jQuery("div#inventories").css("marginBottom", "7px");
             } else {
