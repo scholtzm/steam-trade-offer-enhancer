@@ -10,10 +10,10 @@ Steam Trade Offer Enhancer is a nifty browser script to enhance trade offers ava
 * detects item quality, paints
 * works with all steamcommunity pages that display trade offers
 * automatically adds item if `for_item` URL parameter is present
-* warns users about uncraftable, gifted, restricted items
-* warns users about [rare TF2 keys](http://forums.backpack.tf/index.php?/topic/28864-just-unboxed/)
-* allows users to remove pending invalid trade offers
-* warns you about Escrow period
+* warns user about uncraftable, gifted, restricted items
+* warns user about [rare TF2 keys](http://forums.backpack.tf/index.php?/topic/28864-just-unboxed/)
+* allows user to remove pending invalid trade offers
+* warns user about Escrow period
 
 ### Installation
 

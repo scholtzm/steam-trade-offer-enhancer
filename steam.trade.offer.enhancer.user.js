@@ -4,7 +4,7 @@
 // @description Browser script to enhance Steam trade offers.
 // @include     /^https?:\/\/steamcommunity\.com\/(id|profiles)\/.*\/tradeoffers.*/
 // @include     /^https?:\/\/steamcommunity\.com\/tradeoffer.*/
-// @version     1.4.1
+// @version     1.4.2
 // @author      HusKy
 // ==/UserScript==
 
@@ -81,12 +81,12 @@ var tradeOfferPage = {
     },
 
     attach_links: function(tradeoffer) {
-        var avatar = tradeoffer.find("a.tradeoffer_avatar");
+        var avatar = tradeoffer.find("div.tradeoffer_items.primary").find("a.tradeoffer_avatar");
 
         if(avatar.length > 0) {
             var profileUrl = avatar.attr("href").match(/^https?:\/\/steamcommunity\.com\/(id|profiles)\/(.*)/);
             if(profileUrl) {
-                jQuery("div.tradeoffer_footer_actions").append(" | <a class='whiteLink' target='_blank' href='http://rep.tf/" + profileUrl[2] + "'>rep.tf</a>");
+                tradeoffer.find("div.tradeoffer_footer_actions").append(" | <a class='whiteLink' target='_blank' href='http://rep.tf/" + profileUrl[2] + "'>rep.tf</a>");
             }
         }
     }
@@ -316,15 +316,15 @@ if(location.indexOf("tradeoffers") > -1) {
             tradeOfferPage.dump_summary(jQuery(this), "primary", other_items);
             tradeOfferPage.dump_summary(jQuery(this), "secondary", my_items);
 
-            // Attach links
-            tradeOfferPage.attach_links(jQuery(this));
-
             // Check if trade offer is "unavailable"
             // Do this only for /tradeoffers page and nothing else
             var is_ok = location.indexOf("tradeoffers", location.length - "tradeoffers".length) !== -1;
             is_ok = is_ok || location.indexOf("tradeoffers/", location.length - "tradeoffers/".length) !== -1;
 
             if(is_ok) {
+                // Attach links
+                tradeOfferPage.attach_links(jQuery(this));
+
                 var is_unavailable = jQuery(this).find("div.tradeoffer_items_banner").text().indexOf("Items Now Unavailable For Trade") > -1;
                 if(is_unavailable) {
                     var trade_offer_id = jQuery(this).attr("id").split("_")[1];
