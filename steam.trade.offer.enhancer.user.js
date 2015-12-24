@@ -4,7 +4,7 @@
 // @description Browser script to enhance Steam trade offers.
 // @include     /^https?:\/\/steamcommunity\.com\/(id|profiles)\/.*\/tradeoffers.*/
 // @include     /^https?:\/\/steamcommunity\.com\/tradeoffer.*/
-// @version     1.3.2
+// @version     1.4.0
 // @author      HusKy
 // ==/UserScript==
 
